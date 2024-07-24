@@ -34,10 +34,10 @@ class Account(User):
             age_min=age_min,
             max_distance=max_distance,
             gender_filter=gender_filter,
-            **kwargs
+            **kwargs,
         )
 
-    # def __repr__(self):
-    #     # Extend the representation to include the new fields
-    #     person_repr = super().__repr__()
-    #     return f"{person_repr}, Email: {self.email}, Phone: {self.phone_number}"
+    def __repr__(self):
+        # Extend the representation to include the new fields
+        person_repr = super().__repr__()
+        return f"{person_repr}, Email: {self.email}, Phone: {self.phone_number}"

@@ -10,7 +10,6 @@ BASE_URL = "https://api.gotinder.com"
 DEFAULT_TIMEOUT = 300
 
 
-
 class Api:
     """
     Deals with the tinder API
@@ -31,6 +30,15 @@ class Api:
         ).json()
         return Account.from_api_data(data["data"])
 
+    def get_user(self, user_id):
+        """Gets the details of a user with a given user_id. The user must be matched or else it returns 403"""
+        data = requests.get(
+            f"{BASE_URL}/user/{user_id}",
+            headers={"X-Auth-Token": self._token},
+            timeout=self._timeout,
+        ).json()
+        return User.from_api_data(data["results"])
+
     def matches(self, limit=10):
         """Gets the account matches limited by limit"""
         data = requests.get(
@@ -48,6 +56,7 @@ class Api:
     @dataclass
     class LikeResult:
         """Holds the result of a like"""
+
         is_match: bool
         likes_remaining: int
 
@@ -58,7 +67,7 @@ class Api:
             headers={"X-Auth-Token": self._token},
             timeout=self._timeout,
         ).json()
-        
+
         return Api.LikeResult(data["match"], data["likes_remaining"])
 
     def dislike(self, user_id):

@@ -11,12 +11,7 @@ DEFAULT_INPUT_DIRECTORY = "images/downloaded"
 DEFAULT_MODEL = "https://tfhub.dev/tensorflow/efficientdet/lite2/detection/1"
 
 
-def image_exists_in_folder(image_name, folder):
-    for filename in os.listdir(folder):
-        if image_name in filename:
-            return True
 
-    return False
 
 
 def main():
@@ -49,6 +44,9 @@ def main():
 
     os.makedirs(output_dir, exist_ok=True)
 
+    # by using a set we significantly speed up the lookup times
+    existing_images = set(os.listdir(output_dir))
+
     detector = PersonDetector(model)
 
     image_files = [f for f in os.listdir(input_dir) if f.endswith(".jpg")]
@@ -56,7 +54,7 @@ def main():
     for image in tqdm(image_files, desc="Cropping images"):
         image_name = image.replace(".jpg", "")
 
-        if image_exists_in_folder(image_name, output_dir):
+        if any(image_name in existing_image for existing_image in existing_images):
             continue
 
         image_path = os.path.join(input_dir, image)

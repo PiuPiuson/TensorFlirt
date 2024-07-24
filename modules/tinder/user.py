@@ -1,8 +1,7 @@
-from person import Person
+from typing import List
+from dataclasses import dataclass
 
-from dataclasses import dataclass, field
-from typing import Optional, List
-from datetime import datetime
+from person import Person
 
 
 @dataclass

@@ -1,11 +1,14 @@
 import requests
 
-from user import User
-from person import Person
+from dataclasses import dataclass
+
+from modules.tinder.account import Account
+from modules.tinder.user import User
 
 
 BASE_URL = "https://api.gotinder.com"
 DEFAULT_TIMEOUT = 300
+
 
 
 class Api:
@@ -19,51 +22,61 @@ class Api:
         self._token = token
         self._timeout = timeout
 
-    def getUser(self):
+    def get_account(self):
+        """Gets the account of the current user"""
         data = requests.get(
-            f"{BASE_URL}/v2/profile?include=account%2Cuser",
+            f"{BASE_URL}/v2/profile?include=account,user",
             headers={"X-Auth-Token": self._token},
             timeout=self._timeout,
         ).json()
-        return User.from_api_data(data)
+        return Account.from_api_data(data["data"])
 
     def matches(self, limit=10):
+        """Gets the account matches limited by limit"""
         data = requests.get(
-            BASE_URL + f"/v2/matches?count={limit}",
+            f"{BASE_URL}/v2/matches?count={limit}",
             headers={"X-Auth-Token": self._token},
             timeout=self._timeout,
         ).json()
         return list(
             map(
-                lambda match: Person.from_api_data(match["person"]),
+                lambda match: User.from_api_data(match["person"]),
                 data["data"]["matches"],
             )
         )
 
-    def like(self, user_id):
+    @dataclass
+    class LikeResult:
+        """Holds the result of a like"""
+        is_match: bool
+        likes_remaining: int
+
+    def like(self, user_id) -> LikeResult:
+        """Likes the profile with the given user_id"""
         data = requests.get(
-            BASE_URL + f"/like/{user_id}",
+            f"{BASE_URL}/like/{user_id}",
             headers={"X-Auth-Token": self._token},
             timeout=self._timeout,
         ).json()
-        return {"is_match": data["match"], "liked_remaining": data["likes_remaining"]}
+        
+        return Api.LikeResult(data["match"], data["likes_remaining"])
 
     def dislike(self, user_id):
+        """Passes the profile with the given user_id"""
         requests.get(
-            BASE_URL + f"/pass/{user_id}",
+            f"{BASE_URL}/pass/{user_id}",
             headers={"X-Auth-Token": self._token},
             timeout=self._timeout,
         ).json()
         return True
 
-    def nearby_persons(self):
+    def get_nearby_users(self):
+        """Gets nearby users. These are usually random and come in batches of ~20"""
         data = requests.get(
-            BASE_URL + "/v2/recs/core",
+            f"{BASE_URL}/v2/recs/core",
             headers={"X-Auth-Token": self._token},
             timeout=self._timeout,
         ).json()
         return list(
-            map(
-                lambda user: Person.from_api_data(user["user"]), data["data"]["results"]
-            )
+            map(lambda user: User.from_api_data(user["user"]), data["data"]["results"])
         )

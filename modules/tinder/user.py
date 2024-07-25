@@ -1,11 +1,8 @@
 from dataclasses import dataclass
 from typing import List, Optional
 from datetime import datetime
-from geopy.geocoders import Nominatim
 
 from modules.tinder.image import Image
-
-GEOLOCATOR = Nominatim(user_agent="TensorFlirt")
 
 
 @dataclass
@@ -37,7 +34,6 @@ class User:
     images: List[Image]
     jobs: List[Job]
     schools: List[str]
-    location: Optional[dict]
     looking_for: Optional[str]
 
     @classmethod
@@ -68,11 +64,6 @@ class User:
                 )
             ),
             schools=list(map(lambda school: school["name"], data.get("schools", []))),
-            location=(
-                GEOLOCATOR.reverse(f'{data["pos"]["lat"]}, {data["pos"]["lon"]}')
-                if data.get("pos", False)
-                else None
-            ),
             looking_for=data.get("relationship_intent", {}).get("body_text", None),
             **kwargs,
         )

@@ -86,6 +86,12 @@ class Api:
             headers={"X-Auth-Token": self._token},
             timeout=self._timeout,
         ).json()
-        return list(
-            map(lambda user: User.from_api_data(user["user"]), data["data"]["results"])
-        )
+
+        users = []
+        for result in data["data"]["results"]:
+            if "user" in result:
+                user_data = result["user"]
+                user_data["distance_mi"] = result.get("distance_mi", 0)
+                user = User.from_api_data(user_data)
+                users.append(user)
+        return users

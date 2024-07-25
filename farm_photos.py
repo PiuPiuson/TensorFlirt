@@ -138,6 +138,7 @@ def main():
 
                     image_bytes = BytesIO(req.content)
                     original_image = Image.open(image_bytes)
+                    original_image = original_image.convert('RGB')
                     original_image.save(
                         os.path.join(original_dir, f"{image_filename}_original.jpg")
                     )

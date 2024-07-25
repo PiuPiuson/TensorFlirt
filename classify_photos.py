@@ -2,12 +2,17 @@ import os
 import shutil
 import argparse
 import sys
-from PyQt6.QtWidgets import QApplication, QWidget, QLabel, QVBoxLayout, QPushButton
+from PyQt6.QtWidgets import (
+    QApplication,
+    QWidget,
+    QLabel,
+    QVBoxLayout,
+    QMessageBox
+)
 from PyQt6.QtGui import QPixmap, QImage
 from PyQt6.QtCore import Qt
 
 from PIL import Image
-
 
 DEFAULT_INPUT_DIRECTORY = "images/downloaded"
 DEFAULT_OUTPUT_DIRECTORY = "images/classified"
@@ -111,6 +116,15 @@ class ImageClassifierApp(QWidget):
             self.setWindowTitle(
                 f"Image Classifier ({self.current_index + 1}/{len(self.image_files)}) - {self.image_files[self.current_index]}"
             )
+        else:
+            QMessageBox.information(
+                self,
+                "No More Images",
+                "No more images to classify. The application will now close.",
+            )
+            self.image_label.clear()
+            self.setWindowTitle("Image Classifier - Complete")
+            self.close()
 
     def move_current_image(self, classification):
         if 0 <= self.current_index < len(self.image_files):

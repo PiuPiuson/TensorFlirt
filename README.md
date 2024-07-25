@@ -1,44 +1,67 @@
-# TensorFlirt
-### Swiping is boring, let the robots do it
+# TensorFlirt: Automate Your Swiping Adventure 🤖💕
 
-TensorFlirt is a tool that allows you to train a neural net on your local Tinder preferences, then use it to automate swiping.
+### Swiping is so last year—let the robots handle it!
 
-### How to setup
-* Make sure you have `TensorFlow` up and running (GPU support is not necessary but recommended)
-* This project relies on `tkinter` which some python versions ship without. 
-  In Ubuntu installing it is as simple as `$ sudo apt install python3-tk`
-* Create a virtual environment and activate it (if you don't know how to do that this project is probably too advanced for you)
-* Install requirements: `pip install -r requirements.txt`
+TensorFlirt revolutionizes your dating app experience by training a neural network on your specific Tinder preferences and then automating the swiping process. 
 
-### How to use
-#### Auth Token
-Now for the good stuff. First thing we need is an `X-Auth-Token` which can be obtained by snooping an API request from the tinder webapp.
-Create a `.env` file in the repo directory and place the token inside
-`AUTH_TOKEN = xxxxx-xxx-xxxxxxx-xxxxx`
+> **Heads up!** 🚨 Using TensorFlirt likely violates Tinder's terms of service. Proceed at your own risk!
+
+### Getting Started
+
+#### Prerequisites
+- **TensorFlow**: Make sure it's installed and running. GPU support enhances performance but isn't a must.
+- **Virtual Environment**: Create and activate one. If this sounds daunting, TensorFlirt might be a tad advanced for you.
+- **Dependencies**: Install all necessary packages with:
+  ```bash
+  pip install -r requirements.txt
+  ```
+
+### How to Use TensorFlirt
+
+#### Authentication Token
+First off, snag an `X-Auth-Token` from the Tinder web app by inspecting a request. Insert this token into a `.env` file in the project directory like so:
+```plaintext
+AUTH_TOKEN=xxxxx-xxx-xxxxxxx-xxxxx
+```
 
 #### Farm Images
-In order to train the neural net you're going to need loads of images (ideally ~2000)
-Fortunately, the Tinder API allows us to get them in less than an hour without being rate limited!
-To do that just run `$ python farm_photos.py`
+To train your neural network, you’ll need plenty of images—about 2,000 should do the trick. Luckily, you can fetch these from Tinder's API in under an hour without hitting rate limits. Run:
+```bash
+$ python farm_photos.py
+```
+This script saves photos into `images/downloaded`, plus organizes them into subfolders for original photos, faces and full bodies, setting you up nicely for the next steps.
+Original photos aren't required and consume a lot of space, so I might add a flag to disable downloading them in the future. 
 
-The script will pull photos from your recommendations and place them into the `images/downloaded` folder.
-It will also create two more folders, one with cropped faces and one with the user's body. You're going to use both of them to train the models later.
+The script will also save every profile it comes across in the `images/downloaded/users` directory. They can be read into a `User` class but I haven't implemented it either.
 
-#### Swipe one last time
-Time to swipe for one last time! You need to classify the photos into left and right swipes.
-Run `$ python classify_photos.py` and swipe using the left and right arrow keys. You can undo a swipe with `ctrl + z`
+#### Classify Your Swipes
+You need to manually swipe—sort your photos into 'yes' or 'no' piles, which will be later used to train the neural net.
 
-#### Train the AI
-This is simple, time consuming and grossly automated.
-`$ python train.py`
+The photos are moved from the `downloaded` directory into `images\classified`. This means that farming and classifying can be done at the same time!
+```bash
+$ python classify_photos.py
+```
+Swipe with the left and right arrow keys, and undo with `ctrl + z`.
 
-Feel free to play around with the model if you feel confident, in my experience ~0.75 accuracy is good enough
+#### Train Your AI
+Now, let the magic happen. This script *should* train and produce two models in the `model\` directory, one for faces and one for bodies.
+It runs fairly quickly on a dedicated GPU, so CPU training might take a while but should be feasible.
+```bash
+$ python train.py
+```
+Tinker with the model settings if you’re feeling brave. Aiming for about 0.75 accuracy usually works well in my experience.
 
-#### Sit back and let her rip
-Run `$ python tensor_flirt.py` and watch the AI get you quality matches.
-If only there was a way to get you out of your mum's basement as well...
+#### Launch TensorFlirt
+Let your AI take the reins:
+```bash
+$ python tensor_flirt.py
+```
+Watch as it finds matches for you. Now, if only it could help you move out of your mum’s basement...
 
+### Future Enhancements
 
-### Further work
-This has a lot of potential, auto messaging using an LLM being the low hanging fruit.
-Get in touch if you want to collaborate!
+There’s plenty of room for improvement! A user interface to monitor and adjust the AI's decisions in real-time would be a great start. Also, introducing features like auto-messaging with an advanced language model could take your dating life to the next level!
+
+Interested in collaborating? Drop me a line—we’re excited to push this forward together!
+
+Embark on your automated dating journey with TensorFlirt and spend your newfound free time doing, well, anything else! 🚀💘

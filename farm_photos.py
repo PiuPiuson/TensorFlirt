@@ -1,6 +1,7 @@
 import argparse
 import os
 import requests
+import pickle
 
 from tqdm import tqdm
 from time import sleep
@@ -11,7 +12,6 @@ from random import random
 from modules.tinder.api import Api
 
 DEFAULT_OUTPUT_DIRECTORY = "images/downloaded"
-UUID_FILE = "uuids.txt"
 
 load_dotenv()
 
@@ -41,42 +41,40 @@ def main():
 
     print("Farming photos, use 'ctrl + c' to stop")
 
-    # create the file if it doesn't exist
-    uuid_file = open(os.path.join(output_dir, UUID_FILE), "a+", encoding="utf-8")
-    uuid_file.close()
-
     batch_number = 0
 
     while True:
         nearby_users = api.get_nearby_users()
 
         for user in tqdm(nearby_users, desc=f"Processing batch {batch_number + 1}"):
-            uuid_file = open(
-                os.path.join(output_dir, UUID_FILE), "r+", encoding="utf-8"
-            )
-            found = any(user.id == line.strip() for line in uuid_file)
-            if found:
+            user_prefix = f"{user.id}_{user.name}"
+            user_file = os.path.join(output_dir, f"{user_prefix}.pkl")
+
+            # User already farmed
+            if os.path.isfile(user_file):
                 continue
 
-            for i, image_url in enumerate(
+            for i, image in enumerate(
                 tqdm(
                     user.images, leave=False, desc=f"Downloading images for {user.name}"
                 )
             ):
                 try:
-                    req = requests.get(image_url, stream=True, timeout=300)
+                    req = requests.get(image.url, stream=True, timeout=300)
                     if req.status_code != 200:
                         continue
 
                     with open(
-                        os.path.join(output_dir, f"{user.id}_{user.name}_{i}.jpg"), "wb"
+                        os.path.join(output_dir, f"{user_prefix}_{i}.jpg"), "wb"
                     ) as image_file:
                         image_file.write(req.content)
                 except requests.RequestException as e:
-                    print(f"Failed to download {image_url}: {str(e)}")
+                    print(f"Failed to download {image.url}: {str(e)}")
                     continue
 
-            uuid_file.write(f"{user.id}\n")
+            with open(user_file, "wb") as file:
+                pickle.dump(user, file)
+
             sleep(random() * 2)
 
         batch_number += 1

@@ -3,56 +3,9 @@ from typing import List, Optional
 from datetime import datetime
 from geopy.geocoders import Nominatim
 
+from modules.tinder.image import Image
+
 GEOLOCATOR = Nominatim(user_agent="TensorFlirt")
-
-
-@dataclass
-class Image:
-    """Represents a user image"""
-
-    @dataclass
-    class BoundingBox:
-        """A bounding box for image cropping"""
-
-        width_percent: float
-        x_offset_percent: float
-        height_percent: float
-        y_offset_percent: float
-
-        @classmethod
-        def from_api_bounding_box(cls, data):
-            """Creates a bounding box from data received from the API"""
-            return cls(
-                width_percent=data["width_pct"],
-                x_offset_percent=data["x_offset_pct"],
-                height_percent=data["height_pct"],
-                y_offset_percent=data["y_offset_pct"],
-            )
-
-    url: str
-    face: Optional[BoundingBox]
-    user: Optional[BoundingBox]
-
-    @classmethod
-    def from_api_data(cls, data):
-        """Creates an image from API data"""
-
-        face = None
-        user = None
-
-        url = data["url"]
-
-        try:
-            face = Image.BoundingBox.from_api_bounding_box(data["crop_info"]["algo"])
-        except KeyError:
-            pass
-
-        try:
-            user = Image.BoundingBox.from_api_bounding_box(data["crop_info"]["user"])
-        except KeyError:
-            pass
-
-        return cls(url=url, face=face, user=user)
 
 
 @dataclass

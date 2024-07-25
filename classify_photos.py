@@ -1,4 +1,5 @@
 import os
+import shutil
 import argparse
 import tkinter as tk
 
@@ -6,110 +7,158 @@ from PIL import ImageTk, Image
 from tqdm import tqdm
 
 
-DEFAULT_INPUT_DIRECTORY = "images/cropped"
+DEFAULT_INPUT_DIRECTORY = "images/downloaded"
 DEFAULT_OUTPUT_DIRECTORY = "images/classified"
 
 POSITIVE = "positive"
 NEGATIVE = "negative"
+ORIGINAL = "original"
+FACES = "faces"
+USERS = "users"
 
 
 class ImageClassifierApp:
-    def __init__(
-        self, root, source_folder, positive_folder, negative_folder, resize_height=500
-    ):
+    def __init__(self, root, source_folder, destination_folder):
         self.root = root
         self.source_folder = source_folder
-        self.positive_folder = positive_folder
-        self.negative_folder = negative_folder
-        self.resize_height = resize_height
+        self.destination_folder = destination_folder
         self.current_index = 0
         self.history = []
         self.image_files = []
 
-        if not os.path.exists(positive_folder):
-            os.makedirs(positive_folder)
-        if not os.path.exists(negative_folder):
-            os.makedirs(negative_folder)
+        for folder in [ORIGINAL, FACES, USERS]:
+            os.makedirs(
+                os.path.join(self.destination_folder, folder, POSITIVE), exist_ok=True
+            )
+            os.makedirs(
+                os.path.join(self.destination_folder, folder, NEGATIVE), exist_ok=True
+            )
 
         self.already_classified_images = set(
-            [f for f in os.listdir(self.positive_folder) if f.endswith(".jpg")]
-            + [f for f in os.listdir(self.negative_folder) if f.endswith(".jpg")]
+            [
+                f
+                for f in os.listdir(
+                    os.path.join(self.destination_folder, USERS, POSITIVE)
+                )
+                if f.endswith(".jpg")
+            ]
+            + [
+                f
+                for f in os.listdir(
+                    os.path.join(self.destination_folder, USERS, NEGATIVE)
+                )
+                if f.endswith(".jpg")
+            ]
         )
 
-        self.root.bind("<Right>", self.copy_to_positive)
-        self.root.bind("<Left>", self.copy_to_negative)
+        self.root.bind("<Right>", self.move_current_to_positive)
+        self.root.bind("<Left>", self.move_current_to_negative)
         self.root.bind("<Control-z>", self.undo)
 
         self.label = tk.Label(root)
         self.label.pack()
-        
+
         self.load_images()
 
         self.display_image()
 
     def load_images(self):
         source_images = [
-            f for f in os.listdir(self.source_folder) if f.endswith(".jpg")
+            f
+            for f in os.listdir(os.path.join(self.source_folder, USERS))
+            if f.endswith(".jpg")
         ]
 
-        preselected_negative = [image for image in source_images if "negative" in image]
         self.image_files = [
             image
             for image in source_images
-            if "negative" not in image and image not in self.already_classified_images
+            if image not in self.already_classified_images
         ]
-
-        for image in tqdm(preselected_negative, desc="Copying pre-classified negatives"):
-            src_path = os.path.join(self.source_folder, image)
-            dst_path = os.path.join(self.negative_folder, image)
-
-            image = Image.open(src_path).convert("L")
-            image.save(dst_path)
-
-    def resize_image(self, image):
-        width, height = image.size
-        new_height = self.resize_height
-        new_width = int(new_height * width / height)
-        return image.resize((new_width, new_height))
 
     def display_image(self):
         if 0 <= self.current_index < len(self.image_files):
             image_path = os.path.join(
-                self.source_folder, self.image_files[self.current_index]
+                self.source_folder, USERS, self.image_files[self.current_index]
             )
             image = Image.open(image_path)
-            image = self.resize_image(image)
             self.tk_image = ImageTk.PhotoImage(image)
             self.label.config(image=self.tk_image)
             self.root.title(
                 f"Image Classifier - {self.image_files[self.current_index]} ({self.current_index + 1}/{len(self.image_files)})"
             )
 
-    def copy_to_positive(self, event):
-        self.copy_image(self.positive_folder)
+    def move_current_to_positive(self, event):
+        self.move_current_image(POSITIVE)
 
-    def copy_to_negative(self, event):
-        self.copy_image(self.negative_folder)
+    def move_current_to_negative(self, event):
+        self.move_current_image(NEGATIVE)
 
-    def copy_image(self, destination_folder):
+    @staticmethod
+    def move_image(
+        image_file, source_folder, source_classification, dst_folder, dst_classification
+    ):
+        users_src_path = os.path.join(
+            source_folder, USERS, source_classification, image_file
+        )
+        users_dst_path = os.path.join(dst_folder, USERS, dst_classification, image_file)
+
+        shutil.move(users_src_path, users_dst_path)
+
+        stripped_filename = image_file.replace("_user.jpg", "")
+
+        faces_src_path = os.path.join(
+            source_folder, FACES, source_classification, f"{stripped_filename}_face.jpg"
+        )
+        faces_dst_path = os.path.join(
+            dst_folder,
+            FACES,
+            dst_classification,
+            f"{stripped_filename}_face.jpg",
+        )
+        shutil.move(faces_src_path, faces_dst_path)
+
+        original_src_path = os.path.join(
+            source_folder,
+            ORIGINAL,
+            source_classification,
+            f"{stripped_filename}_original.jpg",
+        )
+        original_dst_path = os.path.join(
+            dst_folder,
+            ORIGINAL,
+            dst_classification,
+            f"{stripped_filename}_original.jpg",
+        )
+        shutil.move(original_src_path, original_dst_path)
+
+    def move_current_image(self, classification):
         if 0 <= self.current_index < len(self.image_files):
             image_file = self.image_files[self.current_index]
-            src_path = os.path.join(self.source_folder, image_file)
-            dst_path = os.path.join(destination_folder, image_file)
 
-            image = Image.open(src_path).convert("L")
-            image.save(dst_path)
+            self.move_image(
+                image_file,
+                self.source_folder,
+                "",
+                self.destination_folder,
+                classification,
+            )
 
-            self.history.append((self.current_index, destination_folder))
+            self.history.append((self.current_index, classification))
             self.current_index += 1
             self.display_image()
 
     def undo(self, event):
         if self.history:
-            last_index, last_folder = self.history.pop()
+            last_index, last_classification = self.history.pop()
             image_file = self.image_files[last_index]
-            src_path = os.path.join(last_folder, image_file)
-            os.remove(src_path)
+
+            self.move_image(
+                image_file,
+                self.destination_folder,
+                last_classification,
+                self.source_folder,
+                "",
+            )
 
             self.current_index = last_index
             self.display_image()
@@ -136,11 +185,8 @@ def main():
     input_dir = args.input_dir
     output_dir = args.output_dir
 
-    positive_dir = os.path.join(output_dir, POSITIVE)
-    negative_dir = os.path.join(output_dir, NEGATIVE)
-
     root = tk.Tk()
-    app = ImageClassifierApp(root, input_dir, positive_dir, negative_dir, 1200)
+    app = ImageClassifierApp(root, input_dir, output_dir)
     root.mainloop()
 
 

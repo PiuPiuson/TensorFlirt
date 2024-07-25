@@ -84,7 +84,7 @@ class ImageClassifierApp:
             self.tk_image = ImageTk.PhotoImage(image)
             self.label.config(image=self.tk_image)
             self.root.title(
-                f"Image Classifier - {self.image_files[self.current_index]} ({self.current_index + 1}/{len(self.image_files)})"
+                f"Image Classifier ({self.current_index + 1}/{len(self.image_files)}) - {self.image_files[self.current_index]}"
             )
 
     def move_current_to_positive(self, event):
@@ -165,7 +165,9 @@ class ImageClassifierApp:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Farms photos from nearby users")
+    parser = argparse.ArgumentParser(
+        description="Moves and classifies images from input_dir to output_dir"
+    )
     parser.add_argument(
         "--output_dir",
         "-o",

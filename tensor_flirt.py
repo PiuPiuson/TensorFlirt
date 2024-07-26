@@ -66,8 +66,29 @@ def main():
         print("Fetching new profile set...")
         nearby_users = api.get_nearby_users()
         print(f"Got {len(nearby_users)} profiles\n\n")
+        
+        if len(nearby_users) == 0:
+            print("Ran out of profiles. Try again tomorrow or expand search settings")
+            exit()
 
         for user in nearby_users:
+            today = datetime.today()
+            age = (
+                today.year
+                - user.birth_date.year
+                - (
+                    (today.month, today.day)
+                    < (user.birth_date.month, user.birth_date.day)
+                )
+            )
+
+            print(
+                f"\n\n\n---- {user.name} ({age}) {user.distance:.0f}km ---- ({num_users_processed}/{USERS_TO_PROCESS})"
+            )
+            print(f"{user.id}")
+            print(f"Looking for: {user.looking_for}")
+            print(f"\n{user.bio}")
+
             faces = []
             users = []
             originals = []
@@ -88,6 +109,11 @@ def main():
                     continue
 
             if len(faces) == 0 or len(users) == 0:
+                print("\u001b[31mUser has no photos of themselves. Passing...\u001b[37m")
+                print("-----------------------------\n\n")
+
+                api.dislike(user.id)
+                sleep(random() * 2)
                 continue
 
             face_results = face_evaluator.evaluate_images(faces)
@@ -138,31 +164,13 @@ def main():
 
             # plt.show()
 
-            num_users_processed += 1
-
-            today = datetime.today()
-            age = (
-                today.year
-                - user.birth_date.year
-                - (
-                    (today.month, today.day)
-                    < (user.birth_date.month, user.birth_date.day)
-                )
-            )
-
-            print(
-                f"\n\n\n---- {user.name} ({age}) {user.distance:.0f}km ---- ({num_users_processed}/{USERS_TO_PROCESS})"
-            )
-            print(f"{user.id}")
-            print(f"Looking for: {user.looking_for}")
-
-            print(f"\n{user.bio}")
             print(
                 f"\nFace: {face_avg_no_outliers:.3f}\t Body: {user_avg_no_outliers:.3f}"
             )
 
             if should_like:
                 print("\u001b[32mLiking...\u001b[37m")
+                num_users_processed += 1
                 api.like(user.id)
             else:
                 print("\u001b[31mPassing...\u001b[37m")

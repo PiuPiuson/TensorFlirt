@@ -88,7 +88,7 @@ class Api:
         ).json()
 
         users = []
-        for result in data["data"]["results"]:
+        for result in data.get("data",{}).get("results", []):
             if "user" in result:
                 user_data = result["user"]
                 user_data["distance_mi"] = result.get("distance_mi", 0)

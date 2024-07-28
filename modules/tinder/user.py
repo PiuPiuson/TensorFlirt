@@ -69,4 +69,4 @@ class User:
         )
 
     def __repr__(self):
-        return f"{self.id} - {self.name} ({self.birth_date.strftime('%d.%m.%Y')})"
+        return f"{self.id} - {self.name} ({self.birth_date.strftime('%d.%m.%Y') if self.birth_date else ''})"

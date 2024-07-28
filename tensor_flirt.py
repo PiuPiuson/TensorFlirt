@@ -66,7 +66,7 @@ def main():
         print("Fetching new profile set...")
         nearby_users = api.get_nearby_users()
         print(f"Got {len(nearby_users)} profiles\n\n")
-        
+
         if len(nearby_users) == 0:
             print("Ran out of profiles. Try again tomorrow or expand search settings")
             exit()
@@ -74,12 +74,16 @@ def main():
         for user in nearby_users:
             today = datetime.today()
             age = (
-                today.year
-                - user.birth_date.year
-                - (
-                    (today.month, today.day)
-                    < (user.birth_date.month, user.birth_date.day)
+                (
+                    today.year
+                    - user.birth_date.year
+                    - (
+                        (today.month, today.day)
+                        < (user.birth_date.month, user.birth_date.day)
+                    )
                 )
+                if user.birth_date
+                else None
             )
 
             print(
@@ -109,7 +113,9 @@ def main():
                     continue
 
             if len(faces) == 0 or len(users) == 0:
-                print("\u001b[31mUser has no photos of themselves. Passing...\u001b[37m")
+                print(
+                    "\u001b[31mUser has no photos of themselves. Passing...\u001b[37m"
+                )
                 print("-----------------------------\n\n")
 
                 api.dislike(user.id)
@@ -130,6 +136,9 @@ def main():
             should_like = should_like_face or should_like_user
 
             if user.looking_for and "Short-term fun" in user.looking_for:
+                should_like = True
+
+            if user.bio and "f1" in user.bio.lower():
                 should_like = True
 
             # Display images with scores using matplotlib

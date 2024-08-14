@@ -75,7 +75,6 @@ def create_model():
 
 def main():
     for category in CATEGORIES:
-
         source_dir = os.path.join(SOURCE_DIR, category)
 
         train_generator, validation_generator = load_data(source_dir)
@@ -103,6 +102,7 @@ def main():
         )
 
         # Save the trained model
+        os.makedirs(OUTPUT_DIR, exist_ok=True)
         model.save(os.path.join(OUTPUT_DIR, f"{category}.keras"))
 
     print("Models trained and saved successfully.")
